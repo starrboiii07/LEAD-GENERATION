@@ -22,7 +22,8 @@ class LeadController extends Controller
         $tasks = Task::where('status', 'open')->orderBy('due_date')->get();
 
         if ($request->ajax()) {
-            return response()->json(['leads' => $leads, 'tasks' => $tasks]);
+            // Return the leads list partial as HTML for AJAX requests
+            return response()->view('leads.partials.leads-list', compact('leads'))->header('Content-Type', 'text/html');
         }
 
         return view('leads.index', compact('leads', 'tasks'));
@@ -35,6 +36,10 @@ class LeadController extends Controller
             'email'     => 'required|email|unique:leads,email',
             'phone'     => 'nullable|string|max:20',
             'position'  => 'nullable|string|max:100',
+            'company'   => 'nullable|string|max:255',
+            'designation' => 'nullable|string|max:255',
+            'contact_type' => 'nullable|string|max:100',
+            'created_at' => 'nullable|date',
             'profile'   => 'nullable|image|max:2048'
         ]);
 
@@ -50,7 +55,13 @@ class LeadController extends Controller
 
         $lead->save();
 
-        return response()->json(['message' => 'Lead added successfully', 'lead' => $lead]);
+        // Return the leads list partial as HTML for AJAX requests
+        if ($request->ajax()) {
+            $leads = Lead::latest()->get();
+            return response()->view('leads.partials.leads-list', compact('leads'))->header('Content-Type', 'text/html');
+        }
+
+        return redirect()->route('leads.index');
     }
 
     public function edit(Lead $lead)
@@ -65,6 +76,10 @@ class LeadController extends Controller
             'email'     => 'required|email|unique:leads,email,' . $lead->id,
             'phone'     => 'nullable|string|max:20',
             'position'  => 'nullable|string|max:100',
+            'company'   => 'nullable|string|max:255',
+            'designation' => 'nullable|string|max:255',
+            'contact_type' => 'nullable|string|max:100',
+            'created_at' => 'nullable|date',
             'profile'   => 'nullable|image|max:2048'
         ]);
 
@@ -80,13 +95,26 @@ class LeadController extends Controller
 
         $lead->save();
 
-        return response()->json(['message' => 'Lead updated successfully', 'lead' => $lead]);
+        // Return the leads list partial as HTML for AJAX requests
+        if ($request->ajax()) {
+            $leads = Lead::latest()->get();
+            return response()->view('leads.partials.leads-list', compact('leads'))->header('Content-Type', 'text/html');
+        }
+
+        return redirect()->route('leads.index');
     }
 
     public function destroy(Lead $lead)
     {
         $lead->delete();
-        return response()->json(['message' => 'Lead deleted successfully']);
+
+        // Return the leads list partial as HTML for AJAX requests
+        if (request()->ajax()) {
+            $leads = Lead::latest()->get();
+            return response()->view('leads.partials.leads-list', compact('leads'))->header('Content-Type', 'text/html');
+        }
+
+        return redirect()->route('leads.index');
     }
 
     public function search(Request $request)
